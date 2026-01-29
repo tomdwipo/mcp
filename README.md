@@ -10,6 +10,7 @@ This project provides independent MCP servers that bridge Claude Code to:
 |--------|---------|-------|--------|
 | **chrome-devtools-mcp** | Browser automation via Chrome DevTools Protocol | 15 | ✅ Stable |
 | **bitbucket-mcp** | Pull request management via Bitbucket REST API v2 | 8 | ✅ Stable |
+| **figma-mcp** | Design file access via Figma REST API | 4 | ✅ Stable |
 
 ## Quick Start
 
@@ -18,6 +19,7 @@ This project provides independent MCP servers that bridge Claude Code to:
 - Node.js >= 18.0.0
 - Claude Code CLI
 - Chrome browser (for chrome-devtools-mcp)
+- Figma account (for figma-mcp)
 
 ### Installation
 
@@ -39,6 +41,7 @@ npm run build
 # Or build individually
 cd chrome-devtools-mcp && npm run build
 cd bitbucket-mcp && npm run build
+cd figma-mcp && npm run build
 ```
 
 ## Configuration
@@ -62,6 +65,14 @@ Add servers to `~/.claude.json`:
         "BITBUCKET_API_TOKEN": "your-token-here",
         "BITBUCKET_EMAIL": "your-email@company.com"
       }
+    },
+    "figma": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["/path/to/mcp/figma-mcp/dist/index.js"],
+      "env": {
+        "FIGMA_ACCESS_TOKEN": "figd_your-token-here"
+      }
     }
   }
 }
@@ -81,6 +92,10 @@ Create an API token at https://bitbucket.org/account/settings/app-passwords/ wit
 - `pullrequest:read`
 - `pullrequest:write`
 
+### Figma Access Token
+
+Create a personal access token at https://www.figma.com/developer/personal-access-tokens
+
 ## Project Structure
 
 ```
@@ -95,6 +110,11 @@ mcp/
 │   │   ├── index.ts        # MCP server
 │   │   └── bitbucket-client.ts
 │   └── dist/
+├── figma-mcp/              # Design access
+│   ├── src/
+│   │   ├── index.ts        # MCP server
+│   │   └── figma-client.ts
+│   └── dist/
 └── .docs/c4/               # C4 architecture docs
 ```
 
@@ -104,6 +124,7 @@ mcp/
 |----------|-------------|
 | [chrome-devtools-mcp/README.md](./chrome-devtools-mcp/README.md) | Browser automation details |
 | [bitbucket-mcp/README.md](./bitbucket-mcp/README.md) | PR management details |
+| [figma-mcp/README.md](./figma-mcp/README.md) | Design file access details |
 | [.docs/c4/](./.docs/c4/) | C4 architecture diagrams |
 | [CLAUDE.md](./CLAUDE.md) | Project documentation for Claude Code |
 
@@ -138,6 +159,13 @@ mcp/
 - `add_comment` - Add comment
 - `get_diff` - Get PR diff
 
+### figma-mcp (4 tools)
+
+- `get_file` - Get file document structure
+- `get_file_nodes` - Get specific nodes by IDs
+- `get_image_render` - Export nodes as images
+- `get_components` - Get all components
+
 ## Technical Details
 
 ### MCP Protocol
@@ -158,6 +186,13 @@ mcp/
 - **Endpoint:** `https://api.bitbucket.org/2.0`
 - **Authentication:** HTTP Basic Auth
 - **Rate Limit:** 1000 requests/hour
+
+### figma-mcp
+
+- **Protocol:** REST API v1 over HTTPS
+- **Endpoint:** `https://api.figma.com/v1`
+- **Authentication:** Personal Access Token
+- **Rate Limit:** Handles 429 with retry
 
 ## Development
 

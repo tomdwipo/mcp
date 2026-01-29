@@ -93,6 +93,25 @@ claude mcp add chrome-devtools -- node ./chrome-devtools-mcp/dist/index.js
 - Retry Strategy: Max 3 retries with exponential backoff
 - Response Size: ~10KB (filtered from ~100KB raw, preserves full descriptions)
 
+### figma-mcp
+> **For detailed documentation, see:** [figma-mcp/README.md](./figma-mcp/README.md)
+
+**Purpose:** MCP server for Figma REST API - enables design file access
+
+**Key Features:**
+- Read Figma file structure and nodes
+- Export nodes as images (JPG, PNG, SVG, PDF)
+- Access components (including library components)
+
+**Authentication:** Personal Access Token
+- Requires `FIGMA_ACCESS_TOKEN`
+- Create token at: https://www.figma.com/developer/personal-access-tokens
+
+**API Endpoints:**
+- Base URL: `https://api.figma.com/v1`
+- Rate Limit: Handles 429 with retry
+- Retry Strategy: Max 3 retries with exponential backoff
+
 ## Project Structure
 
 ```
@@ -112,6 +131,12 @@ mcp/
 │   │   └── bitbucket-client.ts # REST API client
 │   ├── dist/                   # Compiled output
 │   └── .env                    # Local token (optional)
+├── figma-mcp/                  # Figma design access
+│   ├── README.md               # Detailed module docs
+│   ├── src/
+│   │   ├── index.ts            # MCP server entry
+│   │   └── figma-client.ts     # REST API client
+│   └── dist/                   # Compiled output
 └── .docs/
     └── c4/                     # C4 architecture diagrams
         ├── README.md           # C4 index
@@ -141,9 +166,16 @@ mcp/
 - **Rate Limit:** 1000 requests/hour per token
 - **Response Filtering:** ~90% size reduction (107KB → 10KB, preserves full descriptions)
 
+### figma-mcp
+- **Protocol:** REST API v1 over HTTPS
+- **Endpoint:** `https://api.figma.com/v1`
+- **Authentication:** Personal Access Token (X-Figma-Token header)
+- **Tools:** 4 design access commands (get_file, get_file_nodes, get_image_render, get_components)
+- **Rate Limit:** Handles 429 with exponential backoff retry
+
 ## Global Configuration
 
-Both MCP servers are configured globally in `~/.claude.json`:
+All MCP servers are configured globally in `~/.claude.json`:
 
 ```json
 {
@@ -162,6 +194,14 @@ Both MCP servers are configured globally in `~/.claude.json`:
         "BITBUCKET_API_TOKEN": "your-token-here",
         "BITBUCKET_EMAIL": "your-email@company.com"
       }
+    },
+    "figma": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["/path/to/figma-mcp/dist/index.js"],
+      "env": {
+        "FIGMA_ACCESS_TOKEN": "figd_your-token-here"
+      }
     }
   }
 }
@@ -169,6 +209,7 @@ Both MCP servers are configured globally in `~/.claude.json`:
 
 **Credential Management:**
 - **Bitbucket MCP:** Credentials MUST be hardcoded in `~/.claude.json` `env` object
+- **Figma MCP:** `FIGMA_ACCESS_TOKEN` MUST be hardcoded in `~/.claude.json` `env` object
 - **Chrome DevTools:** No credentials required (uses local Chrome instance)
 - **Local .env files:** Fallback for development/testing only
 
@@ -204,6 +245,13 @@ Both MCP servers are configured globally in `~/.claude.json`:
   - Response filtering details
   - Troubleshooting guide (401 errors, token overflow, etc.)
   - Configuration best practices
+
+- **figma-mcp:** See [figma-mcp/README.md](./figma-mcp/README.md) for:
+  - Personal access token creation
+  - Available tools and parameters
+  - File key extraction from URLs
+  - Future enhancements (removed tools)
+  - Image export options
 
 ## Commit Message Format
 

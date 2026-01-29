@@ -12,6 +12,7 @@ The project consists of independent MCP (Model Context Protocol) servers that en
 |----------|-------------|
 | [chrome-devtools-mcp.md](./chrome-devtools-mcp.md) | Browser automation via Chrome DevTools Protocol |
 | [bitbucket-mcp.md](./bitbucket-mcp.md) | Pull request management via Bitbucket REST API |
+| [figma-mcp.md](./figma-mcp.md) | Design file access via Figma REST API |
 
 ## C4 Levels
 
