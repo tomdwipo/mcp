@@ -4,6 +4,27 @@
 
 This project contains MCP (Model Context Protocol) servers that enable Claude Code to interact with various external services and tools.
 
+## Architecture
+
+> **For detailed C4 diagrams, see:** [.docs/c4/](./.docs/c4/)
+
+This project uses the C4 model to document architecture at 4 levels:
+
+| Level | Focus | Diagrams |
+|-------|-------|----------|
+| System Context | External integrations (Claude Code, Chrome, Bitbucket) | ASCII + Mermaid |
+| Container | MCP server processes and communication protocols | ASCII + Mermaid |
+| Component | Internal class structure and data flow | ASCII class diagrams |
+| Code | File organization, tools, and dependencies | Tables & lists |
+
+### Quick Links
+
+| Document | Description |
+|----------|-------------|
+| [.docs/c4/README.md](./.docs/c4/README.md) | C4 documentation index |
+| [.docs/c4/chrome-devtools-mcp.md](./.docs/c4/chrome-devtools-mcp.md) | Browser automation architecture (15 tools, CDP) |
+| [.docs/c4/bitbucket-mcp.md](./.docs/c4/bitbucket-mcp.md) | PR management architecture (8 tools, REST API) |
+
 ## Module Documentation
 
 ### chrome-devtools-mcp
@@ -77,6 +98,7 @@ claude mcp add chrome-devtools -- node ./chrome-devtools-mcp/dist/index.js
 ```
 mcp/
 ├── CLAUDE.md                    # This file
+├── README.md                    # Project overview
 ├── chrome-devtools-mcp/         # Chrome browser automation
 │   ├── README.md               # Detailed module docs
 │   ├── src/
@@ -90,7 +112,11 @@ mcp/
 │   │   └── bitbucket-client.ts # REST API client
 │   ├── dist/                   # Compiled output
 │   └── .env                    # Local token (optional)
-└── .docs/                      # Specifications and plans
+└── .docs/
+    └── c4/                     # C4 architecture diagrams
+        ├── README.md           # C4 index
+        ├── chrome-devtools-mcp.md
+        └── bitbucket-mcp.md
 ```
 
 ## Technical Context
@@ -157,6 +183,14 @@ Both MCP servers are configured globally in `~/.claude.json`:
 
 ## Documentation References
 
+### Architecture Documentation
+- **C4 Diagrams:** See [.docs/c4/](./.docs/c4/) for:
+  - System Context diagrams (ASCII + Mermaid)
+  - Container and Component views
+  - chrome-devtools-mcp architecture
+  - bitbucket-mcp architecture
+
+### Module Documentation
 - **chrome-devtools-mcp:** See [chrome-devtools-mcp/README.md](./chrome-devtools-mcp/README.md) for:
   - Available tools and parameters
   - CDP connection setup
