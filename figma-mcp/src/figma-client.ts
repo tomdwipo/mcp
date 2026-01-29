@@ -115,7 +115,7 @@ export class FigmaClient {
       );
     }
 
-    this.authHeader = `Bearer ${this.accessToken}`;
+    this.authHeader = this.accessToken;
   }
 
   private filterNodeData(node: any, depth: number = 0): any {
@@ -180,8 +180,7 @@ export class FigmaClient {
     for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
       try {
         const headers: Record<string, string> = {
-          "Authorization": this.authHeader,
-          "Content-Type": "application/json",
+          "X-Figma-Token": this.authHeader,
         };
 
         const response = await fetch(url.toString(), {

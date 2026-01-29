@@ -6,10 +6,7 @@ MCP server for Figma REST API - enables Claude Code to read design files, compon
 
 - Read Figma file structure and nodes
 - Export nodes as images (JPG, PNG, SVG, PDF)
-- Access components (global and local)
-- Query design variables and collections
-- Retrieve Dev Mode resources
-- Track text content changes via text events
+- Access components (including library components)
 
 ## Installation
 
@@ -111,46 +108,6 @@ Get all components from a Figma file.
 - `key` (required): Figma file key
 - `since` (optional): Timestamp to get components modified after
 
-### get_local_components
-
-Get local components (not from libraries) from a Figma file.
-
-**Parameters:**
-- `key` (required): Figma file key
-
-### get_variables
-
-Get all variables from a Figma file.
-
-**Parameters:**
-- `key` (required): Figma file key
-
-### get_variable_collections
-
-Get all variable collections from a Figma file.
-
-**Parameters:**
-- `key` (required): Figma file key
-
-### get_dev_resources
-
-Get Dev Mode resources from a Figma file.
-
-**Parameters:**
-- `key` (required): Figma file key
-- `since` (optional): Timestamp to get resources modified after
-
-### get_text_events
-
-Get text change events for a team.
-
-**Parameters:**
-- `teamId` (required): Figma team ID
-- `projectKey` (optional): Filter by specific project
-- `fileKey` (optional): Filter by specific file
-- `since` (optional): Timestamp to get events after
-- `before` (optional): Timestamp to get events before
-
 ## API Endpoints
 
 Base URL: `https://api.figma.com/v1`
@@ -159,43 +116,54 @@ Base URL: `https://api.figma.com/v1`
 - GET `/files/:key/nodes` - Get file nodes
 - GET `/images/:key` - Get image exports
 - GET `/files/:key/components` - Get components
-- GET `/files/:key/local_components` - Get local components
-- GET `/files/:key/variables` - Get variables
-- GET `/files/:key/variable_collections` - Get variable collections
-- GET `/files/:key/dev_resources` - Get Dev Mode resources
-- GET `/teams/:team_id/text_events` - Get text events
 
-## Future Tools
+## Future Enhancements
+
+### Removed Tools (Available in Figma API)
+
+The following tools are available in Figma's API but were removed from this MCP server. They can be re-added when needed:
+
+| Tool | API Endpoint | Description |
+|------|--------------|-------------|
+| `get_local_components` | `/files/{key}/local_components` | Get components defined within this file only (not from libraries) |
+| `get_variables` | `/files/{key}/variables` | Get design variables (design tokens) |
+| `get_variable_collections` | `/files/{key}/variable_collections` | Get variable collections with modes |
+| `get_dev_resources` | `/files/{key}/dev_resources` | Get Dev Mode attachments (links, code snippets) |
+| `get_text_events` | `/teams/{teamId}/text_events` | Get historical text content changes |
+
+**Why removed:** These endpoints return 404 when files don't have these specific features enabled. The implementation code exists in `src/figma-client.ts` (lines 320-414) and can be restored when a use case arises.
+
+### Not Yet Implemented
 
 The following tools are documented for future implementation:
 
-### Comments
+#### Comments
 - `get_comments` - List comments on a file
 - `post_comment` - Add a comment to a file
 - `delete_comment` - Delete a comment
 
-### Webhooks
+#### Webhooks
 - `create_webhook` - Create a webhook
 - `list_webhooks` - List webhooks
 - `delete_webhook` - Delete a webhook
 
-### Projects
+#### Projects
 - `get_team_projects` - List team projects
 - `create_project` - Create a project
 
-### Versions
+#### Versions
 - `get_file_versions` - Get version history
 - `create_version` - Create a version
 
-### Users
+#### Users
 - `get_me` - Get current user info
 - `get_user` - Get user info
 
-### Branches
+#### Branches
 - `get_branches` - List branches
 - `create_branch` - Create a branch
 
-### Libraries
+#### Libraries
 - `get_library_analytics` - Get usage metrics
 
 ## Error Handling
