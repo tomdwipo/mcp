@@ -5,9 +5,18 @@ export interface TabInfo {
     url: string;
     type: string;
 }
+export interface InitializationStatus {
+    state: 'not_started' | 'in_progress' | 'ready' | 'failed';
+    chromeRunning: boolean;
+    connected: boolean;
+    error?: string;
+}
 export declare class ChromeClient {
     private client;
     private currentTargetId;
+    private initializationPromise;
+    private initializationState;
+    private initializationError;
     connect(targetId?: string): Promise<void>;
     launchChrome(url?: string, profile?: string): Promise<string>;
     private waitForTab;
@@ -34,6 +43,9 @@ export declare class ChromeClient {
     sendKey(key: string, modifiers?: string[]): Promise<void>;
     canvasZoom(zoomIn?: boolean, amount?: number): Promise<string>;
     close(): Promise<void>;
+    private ensureInitialized;
+    getInitializationStatus(): InitializationStatus;
+    initialize(): Promise<void>;
 }
 export declare const chromeClient: ChromeClient;
 //# sourceMappingURL=chrome-client.d.ts.map

@@ -16,6 +16,13 @@ export interface TabInfo {
   type: string;
 }
 
+export interface InitializationStatus {
+  state: 'not_started' | 'in_progress' | 'ready' | 'failed';
+  chromeRunning: boolean;
+  connected: boolean;
+  error?: string;
+}
+
 // Utility function to check if CDP is available
 async function isCdpAvailable(): Promise<boolean> {
   try {
@@ -46,12 +53,11 @@ function getChromePath(): string {
 export class ChromeClient {
   private client: Client | null = null;
   private currentTargetId: string | null = null;
+  private initializationPromise: Promise<void> | null = null;
+  private initializationState: 'not_started' | 'in_progress' | 'ready' | 'failed' = 'not_started';
+  private initializationError: Error | null = null;
 
   async connect(targetId?: string): Promise<void> {
-    // First, ensure Chrome is running with debug port
-    await this.ensureChromeRunning();
-
-    // Retry logic for connection
     let lastError: Error | null = null;
     for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
       try {
@@ -202,9 +208,12 @@ export class ChromeClient {
   }
 
   async ensureConnected(): Promise<Client> {
+    await this.ensureInitialized();
+
     if (!this.client) {
-      await this.connect();
+      throw new Error('Client not initialized after initialization completed');
     }
+
     return this.client!;
   }
 
@@ -710,6 +719,54 @@ export class ChromeClient {
       }
       this.client = null;
     }
+  }
+
+  private async ensureInitialized(): Promise<void> {
+    if (this.initializationState === 'ready') {
+      return;
+    }
+
+    if (this.initializationState === 'failed') {
+      throw this.initializationError || new Error('Initialization failed');
+    }
+
+    if (this.initializationPromise) {
+      await this.initializationPromise;
+      return;
+    }
+
+    await this.initialize();
+  }
+
+  getInitializationStatus(): InitializationStatus {
+    const chromeRunning = this.client !== null;
+    return {
+      state: this.initializationState,
+      chromeRunning,
+      connected: chromeRunning,
+      error: this.initializationError?.message,
+    };
+  }
+
+  async initialize(): Promise<void> {
+    if (this.initializationPromise) {
+      return this.initializationPromise;
+    }
+
+    this.initializationState = 'in_progress';
+    this.initializationPromise = (async () => {
+      try {
+        await this.ensureChromeRunning();
+        await this.connect();
+        this.initializationState = 'ready';
+      } catch (error) {
+        this.initializationState = 'failed';
+        this.initializationError = error instanceof Error ? error : new Error(String(error));
+        throw this.initializationError;
+      }
+    })();
+
+    return this.initializationPromise;
   }
 }
 

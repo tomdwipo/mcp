@@ -40,10 +40,10 @@ function getChromePath() {
 class ChromeClient {
     client = null;
     currentTargetId = null;
+    initializationPromise = null;
+    initializationState = 'not_started';
+    initializationError = null;
     async connect(targetId) {
-        // First, ensure Chrome is running with debug port
-        await this.ensureChromeRunning();
-        // Retry logic for connection
         let lastError = null;
         for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
             try {
@@ -179,8 +179,9 @@ class ChromeClient {
         }
     }
     async ensureConnected() {
+        await this.ensureInitialized();
         if (!this.client) {
-            await this.connect();
+            throw new Error('Client not initialized after initialization completed');
         }
         return this.client;
     }
@@ -631,6 +632,47 @@ class ChromeClient {
             }
             this.client = null;
         }
+    }
+    async ensureInitialized() {
+        if (this.initializationState === 'ready') {
+            return;
+        }
+        if (this.initializationState === 'failed') {
+            throw this.initializationError || new Error('Initialization failed');
+        }
+        if (this.initializationPromise) {
+            await this.initializationPromise;
+            return;
+        }
+        await this.initialize();
+    }
+    getInitializationStatus() {
+        const chromeRunning = this.client !== null;
+        return {
+            state: this.initializationState,
+            chromeRunning,
+            connected: chromeRunning,
+            error: this.initializationError?.message,
+        };
+    }
+    async initialize() {
+        if (this.initializationPromise) {
+            return this.initializationPromise;
+        }
+        this.initializationState = 'in_progress';
+        this.initializationPromise = (async () => {
+            try {
+                await this.ensureChromeRunning();
+                await this.connect();
+                this.initializationState = 'ready';
+            }
+            catch (error) {
+                this.initializationState = 'failed';
+                this.initializationError = error instanceof Error ? error : new Error(String(error));
+                throw this.initializationError;
+            }
+        })();
+        return this.initializationPromise;
     }
 }
 exports.ChromeClient = ChromeClient;

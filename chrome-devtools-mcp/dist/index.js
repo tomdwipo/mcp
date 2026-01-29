@@ -269,6 +269,15 @@ server.setRequestHandler(types_js_1.ListToolsRequestSchema, async () => {
                     required: [],
                 },
             },
+            {
+                name: "status",
+                description: "Get Chrome connection and initialization status",
+                inputSchema: {
+                    type: "object",
+                    properties: {},
+                    required: [],
+                },
+            },
         ],
     };
 });
@@ -457,6 +466,17 @@ server.setRequestHandler(types_js_1.CallToolRequestSchema, async (request) => {
                     ],
                 };
             }
+            case "status": {
+                const status = chrome_client_js_1.chromeClient.getInitializationStatus();
+                return {
+                    content: [
+                        {
+                            type: "text",
+                            text: JSON.stringify(status, null, 2),
+                        },
+                    ],
+                };
+            }
             default:
                 throw new Error(`Unknown tool: ${name}`);
         }
@@ -477,6 +497,9 @@ server.setRequestHandler(types_js_1.CallToolRequestSchema, async (request) => {
 async function main() {
     const transport = new stdio_js_1.StdioServerTransport();
     await server.connect(transport);
+    chrome_client_js_1.chromeClient.initialize().catch((error) => {
+        console.error("Chrome initialization failed:", error);
+    });
 }
 main().catch((error) => {
     console.error("Server error:", error);
