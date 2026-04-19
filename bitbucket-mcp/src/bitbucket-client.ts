@@ -299,6 +299,51 @@ export class BitbucketClient {
     );
   }
 
+  async addReviewer(
+    workspace: string,
+    repoSlug: string,
+    prId: number,
+    reviewerUuids: string[]
+  ): Promise<PullRequest> {
+    const currentPR = await this.request<any>(
+      `/repositories/${workspace}/${repoSlug}/pullrequests/${prId}`
+    );
+
+    const existingReviewers = (currentPR.reviewers || []).map((r: any) => ({
+      uuid: r.uuid,
+    }));
+
+    const newReviewers = reviewerUuids.map((uuid) => ({ uuid }));
+
+    const allUuids = new Set([
+      ...existingReviewers.map((r: any) => r.uuid),
+      ...newReviewers.map((r) => r.uuid),
+    ]);
+    const reviewers = Array.from(allUuids).map((uuid) => ({ uuid }));
+
+    const rawPR = await this.request<any>(
+      `/repositories/${workspace}/${repoSlug}/pullrequests/${prId}`,
+      {
+        method: "PUT",
+        body: { reviewers },
+      }
+    );
+    return this.filterPRData(rawPR);
+  }
+
+  async listMembers(
+    workspace: string
+  ): Promise<{ displayName: string; uuid: string; accountId: string }[]> {
+    const response = await this.request<{ values: any[] }>(
+      `/workspaces/${workspace}/members`
+    );
+    return (response.values || []).map((m: any) => ({
+      displayName: m.user?.display_name || "",
+      uuid: m.user?.uuid || "",
+      accountId: m.user?.account_id || "",
+    }));
+  }
+
   async getDiff(
     workspace: string,
     repoSlug: string,

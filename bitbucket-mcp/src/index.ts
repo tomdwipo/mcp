@@ -245,6 +245,47 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           required: ["workspace", "repoSlug", "prId"],
         },
       },
+      {
+        name: "add_reviewer",
+        description: "Add reviewers to a pull request",
+        inputSchema: {
+          type: "object",
+          properties: {
+            workspace: {
+              type: "string",
+              description: "Bitbucket workspace slug",
+            },
+            repoSlug: {
+              type: "string",
+              description: "Repository slug",
+            },
+            prId: {
+              type: "number",
+              description: "Pull request ID",
+            },
+            reviewerUuids: {
+              type: "array",
+              items: { type: "string" },
+              description: "Array of reviewer UUIDs to add",
+            },
+          },
+          required: ["workspace", "repoSlug", "prId", "reviewerUuids"],
+        },
+      },
+      {
+        name: "list_members",
+        description: "List members of a Bitbucket workspace",
+        inputSchema: {
+          type: "object",
+          properties: {
+            workspace: {
+              type: "string",
+              description: "Bitbucket workspace slug",
+            },
+          },
+          required: ["workspace"],
+        },
+      },
     ],
   };
 });
@@ -431,6 +472,46 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             {
               type: "text",
               text: `Diff for pull request #${prId}:\n\n${diff}`,
+            },
+          ],
+        };
+      }
+
+      case "add_reviewer": {
+        const { workspace, repoSlug, prId, reviewerUuids } = args as {
+          workspace: string;
+          repoSlug: string;
+          prId: number;
+          reviewerUuids: string[];
+        };
+
+        const updatedPr = await bitbucketClient.addReviewer(
+          workspace,
+          repoSlug,
+          prId,
+          reviewerUuids
+        );
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Reviewers added to PR #${prId}!\n\n${JSON.stringify(updatedPr, null, 2)}`,
+            },
+          ],
+        };
+      }
+
+      case "list_members": {
+        const { workspace } = args as { workspace: string };
+
+        const members = await bitbucketClient.listMembers(workspace);
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Found ${members.length} member(s):\n\n${JSON.stringify(members, null, 2)}`,
             },
           ],
         };
