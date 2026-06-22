@@ -224,6 +224,33 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         },
       },
       {
+        name: "list_comments",
+        description:
+          "List all comments on a pull request (general + inline, including bot comments like Codacy). Paginated automatically. Deleted comments excluded unless includeDeleted is true.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            workspace: {
+              type: "string",
+              description: "Bitbucket workspace slug",
+            },
+            repoSlug: {
+              type: "string",
+              description: "Repository slug",
+            },
+            prId: {
+              type: "number",
+              description: "Pull request ID",
+            },
+            includeDeleted: {
+              type: "boolean",
+              description: "Include deleted comments (default false)",
+            },
+          },
+          required: ["workspace", "repoSlug", "prId"],
+        },
+      },
+      {
         name: "get_diff",
         description: "Get the diff/changes for a pull request",
         inputSchema: {
@@ -453,6 +480,31 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             {
               type: "text",
               text: `Comment added to pull request #${prId} successfully!`,
+            },
+          ],
+        };
+      }
+
+      case "list_comments": {
+        const { workspace, repoSlug, prId, includeDeleted } = args as {
+          workspace: string;
+          repoSlug: string;
+          prId: number;
+          includeDeleted?: boolean;
+        };
+
+        const comments = await bitbucketClient.listComments(
+          workspace,
+          repoSlug,
+          prId,
+          includeDeleted ?? false
+        );
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Found ${comments.length} comment(s) on PR #${prId}:\n\n${JSON.stringify(comments, null, 2)}`,
             },
           ],
         };

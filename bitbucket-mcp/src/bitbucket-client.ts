@@ -39,6 +39,23 @@ export interface PullRequest {
   };
 }
 
+export interface PullRequestComment {
+  id: number;
+  author: string;
+  createdOn?: string;
+  updatedOn?: string;
+  content: string;
+  deleted: boolean;
+  resolved: boolean;
+  parentId?: number;
+  inline?: {
+    path: string;
+    from?: number | null;
+    to?: number | null;
+  };
+  link?: string;
+}
+
 export interface CreatePRParams {
   workspace: string;
   repoSlug: string;
@@ -342,6 +359,50 @@ export class BitbucketClient {
       uuid: m.user?.uuid || "",
       accountId: m.user?.account_id || "",
     }));
+  }
+
+  async listComments(
+    workspace: string,
+    repoSlug: string,
+    prId: number,
+    includeDeleted = false
+  ): Promise<PullRequestComment[]> {
+    const comments: PullRequestComment[] = [];
+    // Paginate: Bitbucket returns at most `pagelen` per page + an absolute `next` URL.
+    let endpoint: string | null = `/repositories/${workspace}/${repoSlug}/pullrequests/${prId}/comments?pagelen=100&sort=created_on`;
+
+    while (endpoint) {
+      const page: { values: any[]; next?: string } = await this.request<{ values: any[]; next?: string }>(endpoint);
+
+      for (const c of page.values || []) {
+        const isDeleted = !!c.deleted;
+        if (isDeleted && !includeDeleted) continue;
+
+        comments.push({
+          id: c.id,
+          author: c.user?.display_name || c.user?.nickname || "",
+          createdOn: c.created_on,
+          updatedOn: c.updated_on,
+          content: c.content?.raw || "",
+          deleted: isDeleted,
+          resolved: !!c.resolution,
+          parentId: c.parent?.id,
+          inline: c.inline
+            ? {
+                path: c.inline.path,
+                from: c.inline.from ?? null,
+                to: c.inline.to ?? null,
+              }
+            : undefined,
+          link: c.links?.html?.href,
+        });
+      }
+
+      // `next` is an absolute URL — strip the API base to reuse request().
+      endpoint = page.next ? page.next.replace(API_BASE_URL, "") : null;
+    }
+
+    return comments;
   }
 
   async getDiff(
